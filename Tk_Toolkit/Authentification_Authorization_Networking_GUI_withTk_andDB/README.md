@@ -53,3 +53,13 @@ Server :
 - If the server gets the [USER-REGISTER-DATA] we must eval the dict after the [USER-REGISTER-DATA] to have a real dictionary and use it.
 - If the server gets the [USER-LOGIN-DATA] we must eval again the dict after the [USER-LOGIN-DATA] to have a real dictionary. After that we will check the username-password-UEC code. If the user was found, we will create a string with a dict inside and send the string back to the client in the form [USER-LOGIN-SUCCESS] through the communication socket ( because we use TCP ).
 - If the server gets none of the strings that begin with [USER-REGISTER-DATA] or [USER-LOGIN-DATA] we will just send the message from the user, which would be in the string-style "{first-name}{second-name} : {message}" to all the clients
+
+### Port & Hostname
+* The used port will be 1337
+* The used hostname will be socket.gethostname()
+
+### Other information about the project 
+The project is made so that you can use it on different computers that share the same host name.
+As soon as you use the port 1337 & the hostname socket.gethostname(), you are free to use the project on different computers. You can also modify the source code and bind the server & clients to another hostname if you wish to do so.
+
+You can send feedback at : davidgugea@yahoo.com
