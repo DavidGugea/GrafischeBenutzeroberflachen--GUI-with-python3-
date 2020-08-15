@@ -1,12 +1,12 @@
-##Authentification and Authorization project with python 3 networking & GUI using python 3 tkinter module ( Tk ) & python 3 sqlite3 module for db
-###Description about Authorization:
+## Authentification and Authorization project with python 3 networking & GUI using python 3 tkinter module ( Tk ) & python 3 sqlite3 module for db
+### Description about Authorization:
 There are three types of users that can to different things once they log in :
 1. Worker ( Can only see the information about his/her account ) 
 2. Administrator ( Can see the information about his/her account and delete, update and see information about **all workers** )
 3. Owner ( Can see the information about his/her account and delete, update and see information about **all the workers and administrators** ) 
 But all of them will be able to use the chat room
 
-###Information stored about the users in the database:
+### Information stored about the users in the database:
 For every user ( including owner ) we will store the following information:
 1. Username
 2. Password ( Must be bigger than 8 chars. ( no special characters are allowed, like @ or / ) ) 
@@ -19,7 +19,7 @@ For every user ( including owner ) we will store the following information:
 9. Salary
 10. User type ( Worker / Administrator / Owner )
 
-###Information about the client
+### Information about the client
 The client will be at the start a normal tkinter.Tk() frame with the username, password & UEC log in entries. We will have 2 additional buttons:
 
 - Register
@@ -28,7 +28,7 @@ The client will be at the start a normal tkinter.Tk() frame with the username, p
 If the user chooses to click on log in we will send the login-data to the server
 If the user chooses to click on register we will build a top-level window frame with all the needed user-data for registration and send it to the server.
 
-###Authorization in detail
+### Authorization in detail
 If the user type is :
 1. Worker
 - He will only be allowed to see the information about his account 
@@ -42,7 +42,7 @@ If the user type is :
 - He will be able to update user-account data by choosing the property that he wants to update from the option menu & add the new value in the entry below. The properties that he will be allowed to update will be : street name & street number, Postal Code, City name, Salary & Type ( only Worker or Administrator can be set at the type, there can only be one single owner )
 - The administrator & owner frame will include an info-frame, control-frame & chat-frame
 
-###Server & Client configuration
+### Server & Client configuration
 Client :
 - When the client will want to send register data to the server, he will have to send it in this string-style : "[USER-REGISTER-DATA]{Username : 'x' ... }"
 - When the client will want to send login data to the server, he will have to send it in this string-style : "[USER-LOGIN-DATA]{Username : 'x' ... }"
