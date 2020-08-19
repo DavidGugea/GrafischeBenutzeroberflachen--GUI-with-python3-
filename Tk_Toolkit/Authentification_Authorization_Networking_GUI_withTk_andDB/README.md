@@ -43,16 +43,18 @@ If the user type is :
 - The administrator & owner frame will include an info-frame, control-frame & chat-frame
 
 ### Server & Client configuration
+#### Server-Client communication
 Client :
 - When the client will want to send register data to the server, he will have to send it in this string-style : "[USER-REGISTER-DATA]{Username : 'x' ... }"
 - When the client will want to send login data to the server, he will have to send it in this string-style : "[USER-LOGIN-DATA]{Username : 'x' ... }"
 - When the client wants to send a message through the chat, he will have to send it in this string-style : "{first-name}{second-name} : {message}"
-- When the client receives something from the server, then just print in the chat-
 
 Server : 
-- If the server gets the [USER-REGISTER-DATA] we must eval the dict after the [USER-REGISTER-DATA] to have a real dictionary and use it.
-- If the server gets the [USER-LOGIN-DATA] we must eval again the dict after the [USER-LOGIN-DATA] to have a real dictionary. After that we will check the username-password-UEC code. If the user was found, we will create a string with a dict inside and send the string back to the client in the form [USER-LOGIN-SUCCESS] through the communication socket ( because we use TCP ).
+- If the server gets the [USER-REGISTER-DATA] we must eval the dict after the [USER-REGISTER-DATA] to have a real dictionary and then check if the UEC code and password haven't been used before in the database. If they haven't, then add the new user in the database and send the client the [USER-REGISTER-SUCCESS] message back. If the UEC code or the Password properties have already been used, don't add anything new to the database, and send the [USER-REGISTER-ERROR] to the client.
+- If the server gets the [USER-LOGIN-DATA] we must eval again the dict after the [USER-LOGIN-DATA] to have a real dictionary. After that we will check the username-password-UEC code. If the user was found, we will create a string with a dict inside that will contain all the data from the user and send the string back to the client in the form "[USER-LOGIN-SUCCESS]{"Username" : x ... }" through the communication socket ( because we use TCP ). In the case that the login data wasn't good and we couldn't find the user in the database, we will have to send a [USER-LOGIN-ERROR] message back to the client.
 - If the server gets none of the strings that begin with [USER-REGISTER-DATA] or [USER-LOGIN-DATA] we will just send the message from the user, which would be in the string-style "{first-name}{second-name} : {message}" to all the clients
+#### Communication setup
+The server and the communication sockets in the default selector in the server file will be non-blocking socket (socket.setblocking(False)). The clients on the other side, will be blocking sockets with a timeout for the recv method of 0.1 seconds.
 
 ### Port & Hostname
 * The used port will be 1337
