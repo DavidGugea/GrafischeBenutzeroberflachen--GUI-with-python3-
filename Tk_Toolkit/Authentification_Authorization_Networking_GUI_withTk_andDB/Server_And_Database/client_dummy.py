@@ -2,7 +2,7 @@ import socket
  
 client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 client.connect((socket.gethostname(), 1337))
-client.settimeout(0.1)
+client.settimeout(0.2)
 # client.setblocking(False)
 BUF_SIZE = 4096
 

@@ -12,7 +12,7 @@ For every user ( including owner ) we will store the following information:
 2. Password ( Must be bigger than 8 chars. ( no special characters are allowed, like @ or / ) ) 
 3. UEC ( User-Entry-Code, will be a randomly generated 10-characters long string containing letters and numbers )
 4. First name
-5. Last name
+5. Second name
 6. Street Name & Street Number
 7. Postal Code ( 5-digit long number )
 8. City name
@@ -54,7 +54,7 @@ Server :
 - If the server gets the [USER-LOGIN-DATA] we must eval again the dict after the [USER-LOGIN-DATA] to have a real dictionary. After that we will check the username-password-UEC code. If the user was found, we will create a string with a dict inside that will contain all the data from the user and send the string back to the client in the form "[USER-LOGIN-SUCCESS]{"Username" : x ... }" through the communication socket ( because we use TCP ). In the case that the login data wasn't good and we couldn't find the user in the database, we will have to send a [USER-LOGIN-ERROR] message back to the client.
 - If the server gets none of the strings that begin with [USER-REGISTER-DATA] or [USER-LOGIN-DATA] we will just send the message from the user, which would be in the string-style "{first-name}{second-name} : {message}" to all the clients
 #### Communication setup
-The server and the communication sockets in the default selector in the server file will be non-blocking socket (socket.setblocking(False)). The clients on the other side, will be blocking sockets with a timeout for the recv method of 0.1 seconds.
+The server and the communication sockets in the default selector in the server file will be non-blocking socket (socket.setblocking(False)). The clients on the other side, will be blocking sockets with a timeout for the recv method of 0.2 seconds.
 
 ### Port & Hostname
 * The used port will be 1337
