@@ -28,6 +28,9 @@ class Server(object):
         # Register the server listening for client connections and creating communication-sockets
         self.DEFAULT_SELECTOR.register(self.server, selectors.EVENT_READ, self.accept_clientSocket)
 
+        # Create a list with all the communication sockets with all the active clients for the chat message, since we have to send the chat message to al clients.
+        self.CLIENTS = list()
+
     def run(self):
         while True:
             for key, mask in self.DEFAULT_SELECTOR.select():
@@ -37,7 +40,11 @@ class Server(object):
     def accept_clientSocket(self, selector, server):
         # Get the communication socket & the communication socket address info
         communication_socket, communication_socket_addr_info = self.server.accept()
+        self.CLIENTS.append(communication_socket)
         communication_socket.setblocking(False) 
+
+        # Print out to the server console that a new client has been registered
+        print("A new client has been registered -- > {0} < -- ".format(communication_socket_addr_info))
 
         # Register the communication socket to the selector to handle the messages from the different clients
         selector.register(communication_socket, selectors.EVENT_READ, self.handleCommunicationSocket)
@@ -72,9 +79,19 @@ class Server(object):
                 self.database_login(communication_socket, LOGIN_DATA_DICT)
                 print("LOGIN DATA -- > {0}".format(LOGIN_DATA_DICT))
             else:
-                print("USER CHAT MESSAGE -- > {0}".format(client_message))
+                print("CHAT MESSAGE -- > {0}".format(client_message))
+                for active_communication_socket in self.CLIENTS:
+                    if active_communication_socket != communication_socket:
+                        active_communication_socket.send("{0}\n".format(client_message).encode("utf-8"))
+
         except ConnectionResetError:
+            # Print out to the console that the client was closed.
             print("Communication with {0} has stopped. We will unregister the client-socket.".format(communication_socket_addr_info))
+
+            # Delete the client's communication socket with the server from the active clients list
+            del self.CLIENTS[self.CLIENTS.index(communication_socket)]
+
+            # Unregister and close the communication socket
             selector.unregister(communication_socket)
             communication_socket.close()
 
