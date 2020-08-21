@@ -20,7 +20,6 @@ class Server(object):
         self.db_cursor = self.db_connection.cursor()
         self.db_cursor.execute("SELECT * FROM users_table")
         self.USERS = self.db_cursor.fetchall()
-        print(self.USERS)
         
         # Create the default selector to register all the coming clients
         self.DEFAULT_SELECTOR = selectors.DefaultSelector()
@@ -92,7 +91,6 @@ class Server(object):
                 UPDATE_DATA_DICT = eval(client_message.split("]")[1])
                 self.database_update(communication_socket, UPDATE_DATA_DICT)
             else:
-                print("CHAT MESSAGE -- > {0}".format(client_message))
                 for active_communication_socket in self.CLIENTS:
                     if active_communication_socket != communication_socket:
                         active_communication_socket.send("{0}\n".format(client_message).encode("utf-8"))
@@ -128,7 +126,6 @@ class Server(object):
         If the UEC code or the Password properties have already been used, don't add anything new to the database, and send the [USER-REGISTER-ERROR] to the client. 
         '''
         
-        print("USER IN USE -- > {0}".format(user_in_use))
         if not user_in_use:
             # Create the query and insert the new user in the database
             query = "INSERT INTO users_table VALUES (:Username, :Password, :UEC, :FirstName, :SecondName, :StreetNameStreetNumber, :PostalCode, :CityName, :Salary, :UserType)"
