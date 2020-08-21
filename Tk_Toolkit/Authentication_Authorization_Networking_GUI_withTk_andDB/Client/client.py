@@ -1,6 +1,5 @@
 import tkinter, tkinter.scrolledtext, tkinter.messagebox, tkinter.font
 import socket
-import sys
 
 class ClientGUI(tkinter.Frame):
     def __init__(self, master = None):
@@ -29,15 +28,6 @@ class ClientGUI(tkinter.Frame):
 
         # Create the for the client authentication frame
         self.createAuthenticationWidgets()
-
-    def error_message(self, title, message):
-        # Show the error message popup
-        tkinter.messagebox.showerror(title, message)
-    
-    def error_message_close(self, title, message):
-        # Show the error message popup AND close the entire program
-        tkinter.messagebox.showerror(title, message)
-        sys.exit(0)
 
     def createAuthenticationWidgets(self):
         # Welcome message
