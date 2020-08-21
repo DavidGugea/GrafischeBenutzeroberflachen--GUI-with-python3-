@@ -1,4 +1,4 @@
-## Authentification and Authorization project with python 3 networking & GUI using python 3 tkinter module ( Tk ) & python 3 sqlite3 module for db
+## Authentication and Authorization project with python 3 networking & GUI using python 3 tkinter module ( Tk ) & python 3 sqlite3 module for db
 ### Description about Authorization:
 There are three types of users that can to different things once they log in :
 1. Worker ( Can only see the information about his/her account ) 
