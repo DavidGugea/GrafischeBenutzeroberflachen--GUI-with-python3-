@@ -41,8 +41,8 @@ class DBGenerator():
 
     def generate(self):
         # Create a list with lower-case, upper-case alphabet letters & with all the numbers from 1 to 9 (incl.) for the password & UEC code and another list that contains all of them ( lowercase, uppercase & digits )
-        lower_case_letters = [chr(i) for i in list(range(ord("a"), ord("z"), 1))]
-        upper_case_letters = [chr(i) for i in list(range(ord("A"), ord("Z"), 1))]
+        lower_case_letters = [chr(i) for i in list(range(ord("a"), ord("z") + 1, 1))]
+        upper_case_letters = [chr(i) for i in list(range(ord("A"), ord("Z") + 1, 1))]
         digits = list(range(1, 10))
         all_sequences = list()
         all_sequences.extend(lower_case_letters)
@@ -83,7 +83,7 @@ class DBGenerator():
                 UserType = "Administrator" 
             elif user_number == 153:
                 # Owner
-                Salary = random.randint(8000, 420000000000)
+                Salary = random.randint(8000, 10000)
                 UserType = "Owner"
 
             # Build a tuple with all the user-data and a string with the needed sql-query. We will use a secure way to enter values inside the database. ( Learned this from my book )
