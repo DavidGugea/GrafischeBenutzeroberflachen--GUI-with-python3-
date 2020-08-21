@@ -4,17 +4,20 @@ import socket
 class ClientGUI(tkinter.Frame):
     def __init__(self, master = None):
         # Configure the master frame
-        self.ClientAuthentification_Frame = master
-        self.ClientAuthentification_Frame.resizable(0, 0)
-        self.ClientAuthentification_Frame.geometry("550x400")
-        self.ClientAuthentification_Frame.title("Client Authentification")
+        self.ClientAuthentication_Frame = master
+        self.ClientAuthentication_Frame.resizable(0, 0)
+        self.ClientAuthentication_Frame.geometry("550x400")
+        self.ClientAuthentication_Frame.title("Client Authentification")
 
         # Pack the master
-        super().__init__(self.ClientAuthentification_Frame)
+        super().__init__(self.ClientAuthentication_Frame)
         self.pack()
 
-        # Create the for the client authentification frame
-        self.create
+        # Create the for the client authentication frame
+        self.createAuthenticationWidgets()
+
+    def createAuthenticationWidgets(self):
+        pass
 
 
 
