@@ -1,6 +1,7 @@
 import socket  # We could have built the socket-server with the socketserver module & socketserver.BaseRequestHandler, but I decided to go with selectors
 import selectors
 import sqlite3
+import random
 
 class Server(object):
     def __init__(self):
@@ -127,7 +128,15 @@ class Server(object):
         '''
         
         if not user_in_use:
-            # Create the query and insert the new user in the database
+            # Create the query and insert the new user in the database & give the user a random salary
+            user_salary = None
+            if REGISTER_DATA_DICT.get("UserType") == "Worker":
+                user_salary = random.choice(list(range(1000, 3001)))
+            elif REGISTER_DATA_DICT.get("UserType") == "Administrator":
+                user_salary = random.choice(list(range(3000, 8001)))
+
+            REGISTER_DATA_DICT["Salary"] = user_salary
+
             query = "INSERT INTO users_table VALUES (:Username, :Password, :UEC, :FirstName, :SecondName, :StreetNameStreetNumber, :PostalCode, :CityName, :Salary, :UserType)"
             self.db_cursor.execute(query, REGISTER_DATA_DICT)
 
@@ -136,7 +145,7 @@ class Server(object):
 
             # Update the new users for the database
             self.db_cursor.execute("SELECT * FROM users_table")
-            self.USERS = db_cursor.fetchall()
+            self.USERS = self.db_cursor.fetchall()
 
             # Send the success message to the client 
             communication_socket.send("[USER-REGISTER-SUCCESS]".encode("utf-8"))

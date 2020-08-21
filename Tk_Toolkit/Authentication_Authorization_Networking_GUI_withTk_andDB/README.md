@@ -10,14 +10,14 @@ But all of them will be able to use the chat room
 For every user ( including owner ) we will store the following information:
 1. Username
 2. Password ( Must be bigger than 8 chars. ( no special characters are allowed, like @ or / ) ) 
-3. UEC ( User-Entry-Code, will be a randomly generated 10-characters long string containing letters and numbers )
+3. UEC ( User-Entry-Code, will be a randomly generated string containing letters and numbers )
 4. First name
 5. Second name
 6. Street Name & Street Number
 7. Postal Code ( 5-digit long number )
 8. City name
 9. Salary
-10. User type ( Worker / Administrator / Owner )
+10. User type ( Types & Salaries : Worker (1000, 3000 ) / Administrator (3000, 8000) / Owner (8000, 10000) )
 
 ### Information about the client
 The client will be at the start a normal tkinter.Tk() frame with the username, password & UEC log in entries. We will have 2 additional buttons:
