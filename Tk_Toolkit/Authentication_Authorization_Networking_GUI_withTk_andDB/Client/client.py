@@ -241,21 +241,19 @@ class ClientGUI(tkinter.Frame):
             # Send the user register data information to the server
             client.send("[USER-REGISTER-DATA]{0}".format(user_dict).encode("utf-8"))
 
-            while True:
-                try:
-                    message_back = client.recv(client_BUFFER_SIZE)
-                    message_back = message_back.decode("utf-8")
-                
-                    if message_back == "[USER-REGISTER-SUCCESS]":
-                        tkinter.messagebox.showinfo("Register success", "You have been successfully registered. Welcome !")
-                    elif message_back == "[USER-REGISTER-ERROR]":
-                        tkinter.messagebox.showerror("Register error", "There were problems when trying to register you, make sure that the password & uec code are unique")
+            try:
+                message_back = client.recv(client_BUFFER_SIZE)
+                message_back = message_back.decode("utf-8")
+            
+                if message_back == "[USER-REGISTER-SUCCESS]":
+                    tkinter.messagebox.showinfo("Register success", "You have been successfully registered. Welcome !")
+                elif message_back == "[USER-REGISTER-ERROR]":
+                    tkinter.messagebox.showerror("Register error", "There were problems when trying to register you, make sure that the password & uec code are unique")
+            except:
+                pass
 
-                    # Close the client
-                    client.close()
-                    break
-                except:
-                    pass
+            # Close the client
+            client.close()
                     
     def login(self, e=None):
         # Build the string with the dictionary that we will send to the server 
@@ -416,12 +414,17 @@ class ClientGUI(tkinter.Frame):
 
             entry.pack(pady = 10, ipady=3, ipadx=3)
 
+        def function_for_deleteWithUserDataArgument():
+            # I will need this function to pass it to the command property of the delete button because I can't pass in any arguments directly in there, so this function will call self.delete with the USER_DATA_DICT argument which I need, because I have to know the type of the client-user that wants to delete another user, to see if he is allowed to or not. For instance, if the user type is administrator, he can't delete the owner
+            self.delete(USER_DATA_DICT)
+
         delete_button = tkinter.Button(delete_frame, text = "Delete user")
         delete_button.configure(
             bg = "#333",
             fg = "#fff",
             font = "Cursive 14 bold",
-            borderwidth = 0
+            borderwidth = 0,
+            command = function_for_deleteWithUserDataArgument
         )
         delete_button.pack(pady=(88, 10), ipadx=2, ipady=2)
         ##### Delete frame #####
@@ -468,7 +471,8 @@ class ClientGUI(tkinter.Frame):
             bg = "#333",
             fg = "#fff",
             font = "Cursive 14 bold",
-            borderwidth = 0
+            borderwidth = 0,
+            command = self.info
         )
         info_button.pack(pady=(137, 10), ipadx=2, ipady=2)
         ##### Info frame #####
@@ -505,25 +509,30 @@ class ClientGUI(tkinter.Frame):
 
         update_username_entry = tkinter.Entry(update_frame, textvariable = self.update_username)
         update_password_entry = tkinter.Entry(update_frame, textvariable = self.update_password)
-        update_UpdateProperty_entry = tkinter.Entry(update_frame, textvariable = self.update_UpdateProperty)
+        update_UpdateProperty_optionMenu = tkinter.OptionMenu(update_frame, self.update_UpdateProperty, *["FirstName", "SecondName", "StreetNameStreetNumber", "PostalCode", "CityName", "Salary", "UserType"])
         update_Value_entry = tkinter.Entry(update_frame, textvariable = self.update_Value)
 
-        for entry in [update_username_entry, update_password_entry, update_UpdateProperty_entry, update_Value_entry]:
-            entry.configure(
+        for widget in [update_username_entry, update_password_entry, update_UpdateProperty_optionMenu, update_Value_entry]:
+            widget.configure(
                 bg = "#5B7594",
                 fg = "#F7F3F0",
                 font = "Cursive 12 bold",
                 borderwidth = 0
             )
 
-            entry.pack(pady = 10, ipady=5, ipadx=3)
+            widget.pack(pady = 10, ipady=5, ipadx=3)
+
+        def function_for_updateWithUserDataArgument():
+            # Same thing like the delete function
+            self.update(USER_DATA_DICT)
 
         update_button = tkinter.Button(update_frame, text = "Update")
         update_button.configure(
             bg = "#333",
             fg = "#fff",
             font = "Cursive 14 bold",
-            borderwidth = 0
+            borderwidth = 0,
+            command = function_for_updateWithUserDataArgument
         )
         update_button.pack(pady=(25, 10), ipadx=2, ipady=2)
         ##### Update frame ####
@@ -579,6 +588,159 @@ class ClientGUI(tkinter.Frame):
         chat_entry.pack(pady=(20, 0), ipady=3, ipadx=3)
 
         chat_frame.pack(fill = "x", pady = (50, 0)) 
+
+    def delete(self, USER_DATA_DICT):
+        # Get the user input needed to delete the user, build the dictionary with it, then the string and send it to the server.
+        username = self.delete_username.get()
+        password = self.delete_password.get()
+        uec = self.delete_UEC.get()
+        
+        delete_dictionary = {
+            "Username" : username,
+            "Password" : password,
+            "UEC" : uec,
+            "TYPE" : USER_DATA_DICT.get("UserType")
+        }
+
+        # Create the client and connect it to the server
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect((socket.gethostname(), 1337))
+        client.setblocking(True)
+        client_BUFFER_SIZE = 2048
+
+        # Send the delete message back to the server 
+        client.send("[USER-DELETE-DATA]{0}".format(delete_dictionary).encode("utf-8"))
+
+        # Wait for the server response and print it out to the user
+        try:
+            server_response_message = client.recv(client_BUFFER_SIZE)
+            server_response_message = server_response_message.decode("utf-8")
+
+            if server_response_message.startswith("[USER-DELETE-SUCCESS]"):
+                tkinter.messagebox.showinfo("User delete successfully", "The user has been successfully deleted.")
+            elif server_response_message.startswith("[USER-DELETE-ERROR]"):
+                tkinter.messagebox.showerror("Error", "There was an error when trying to delete the user. Make sure that the given username, password & uec are correctly written ( case sensitive ).")
+
+        except:
+            pass
+
+        client.close()
+    
+    def info(self):
+        # Get the user input and send it to the server.
+        username = self.info_username.get()
+        password = self.info_password.get()
+        
+        info_dictionary = {
+            "Username" : username,
+            "Password" : password
+        }
+
+        # Build the client and send the info string to the server
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect((socket.gethostname(), 1337))
+        client.setblocking(True)
+        client_BUFFER_SIZE = 32768
+
+        # Send the info string to the server and wait for a response.
+        client.send("[USER-INFO-DATA]{0}".format(info_dictionary).encode("utf-8")) 
+        user_info = None
+        server_validation = False
+
+        try:
+            server_response_message = client.recv(client_BUFFER_SIZE)
+            server_response_message = server_response_message.decode("utf-8")
+
+            if server_response_message.startswith("[USER-INFO-SUCCESS]"):
+                user_info = eval(server_response_message.split("]")[1])
+                server_validation = True
+            elif server_response_message.startswith("[USER-INFO-ERROR]"):
+                tkinter.messagebox.showerror("Error", "There was an error when trying to display the information about the user. Make sure that the username & password of the user are correctly written ( case sensitive ).")
+        except:
+            pass
+
+        # Close the client
+        client.close()
+                
+        if server_validation:
+            # Take the user info and build a toplevel frame with all the user-info inside of it 
+            user_info = eval(server_response_message.split("]")[1])
+
+            # Build the toplevel frame with all the user info inside
+            info_toplevel = tkinter.Toplevel(self.Login_Toplevel)
+
+            info_toplevel.resizable(0, 0)
+            info_toplevel.title("User info")
+            info_toplevel.geometry("640x600")
+
+            info_toplevel.configure(
+                bg = "#F7F3F0",
+                borderwidth = 0
+            )
+
+            info_toplevel_title = tkinter.Label(info_toplevel)
+            info_toplevel_title.configure(
+                text = "Information about the user",
+                fg = "#FF896A",
+                bg = "#F7F3F0",
+                font = "Cursive 22 bold",
+                borderwidth = 0
+            )
+            info_toplevel_title.pack(pady=(0, 100))
+
+            for key, value in user_info.items():
+                label = tkinter.Label(info_toplevel)
+                label.configure(
+                    text = "{0} : {1}".format(key, value),
+                    fg = "#5B7594",
+                    bg = "#F7F3F0",
+                    font = "Cursive 14 bold",
+                    borderwidth = 0
+                )
+
+                label.pack(pady=2.5)
+
+    def update(self, USER_DATA_DICT):
+        # Get the user information
+        username = self.update_username.get()
+        password = self.update_password.get()
+        update_property = self.update_UpdateProperty.get()
+        value = self.update_Value.get()
+        
+        # Make the dictionary to send to the server 
+        update_dictionary = {
+            "Username" : username,
+            "Password" : password,
+            "UpdateProperty" : update_property,
+            "Value" : value,
+            "TYPE" : USER_DATA_DICT.get("UserType")
+        }
+
+        print(update_dictionary)
+
+        # Make the client and send the user information to the server
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect((socket.gethostname(), 1337))
+        client.setblocking(True)
+        client_BUFFER_SIZE = pow(2, 15)
+
+        # Send the update to the server
+        client.send("[USER-UPDATE-DATA]{0}".format(update_dictionary).encode("utf-8"))
+
+        # Wait for a response back from the server and print it out to the user 
+        try:
+            server_response_message = client.recv(client_BUFFER_SIZE) 
+            server_response_message = server_response_message.decode("utf-8")
+
+            if server_response_message == "[USER-UPDATE-SUCCESS]":
+                tkinter.messagebox.showinfo("Update success", "The user has been successfully updated.")
+            elif server_response_message == "[USER-UPDATE-ERROR]":
+                tkinter.messagebox.showerror("Update error", "We couldn't update the user. Make sure that the username & password are written correctly ( case sensitive ).")
+        except:
+            pass
+
+        # Close the client
+        client.close()
 
 tk = tkinter.Tk()
 
