@@ -50,7 +50,7 @@ Client :
 - When the client wants to send a message through the chat, he will have to send it in this string-style : "{first-name}{second-name} : {message}"
 <br><br>
 - When the client user type is "Administrator" or "Owner" and wants to delete something, it will have to send a string to the server that will look like this : "[USER-DELETE-DATA]{Username : "...", Password : "...", UEC : "...", TYPE: "..."} 
-- For update : "[USER-UPDATE-DATA]{Username: "...", Password : "...", UpdateProperty : "...", TYPE: "..."}
+- For update : "[USER-UPDATE-DATA]{Username: "...", Password : "...", UpdateProperty : "...", Value: "...", TYPE: "..."}
 - For information about the user : "[USER-INFO-DATA]{Username:"...", Password: "..."}
 
 <br>
