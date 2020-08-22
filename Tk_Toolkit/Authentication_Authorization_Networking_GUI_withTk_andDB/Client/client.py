@@ -50,10 +50,13 @@ class ClientGUI(tkinter.Frame):
         self.ClientAuthentication_UEC.set("UEC")
 
         ClientAuthentication_Username_EntryWidget = tkinter.Entry(self.ClientAuthentication_Frame, textvariable = self.ClientAuthentication_Username)
+        ClientAuthentication_Username_EntryWidget.bind("<Return>", self.login)
 
         ClientAuthentication_Password_EntryWidget = tkinter.Entry(self.ClientAuthentication_Frame, textvariable = self.ClientAuthentication_Password)
+        ClientAuthentication_Password_EntryWidget.bind("<Return>", self.login)
 
         ClientAuthentication_UEC_EntryWidget = tkinter.Entry(self.ClientAuthentication_Frame, textvariable = self.ClientAuthentication_UEC)
+        ClientAuthentication_UEC_EntryWidget.bind("<Return>", self.login)
 
         for EntryWidget in [ClientAuthentication_Username_EntryWidget, ClientAuthentication_Password_EntryWidget, ClientAuthentication_UEC_EntryWidget]:
             EntryWidget.configure(
@@ -83,9 +86,6 @@ class ClientGUI(tkinter.Frame):
 
         ClientAuthentication_Login_Button.configure(command = self.login)
         ClientAuthentication_Register_Button.configure(command = self.build_register_toplevel)
-
-    def login(self):
-        pass
     
     def build_register_toplevel(self):
         # Build a new toplevel for registering with all the needed inputs
@@ -96,7 +96,7 @@ class ClientGUI(tkinter.Frame):
         )
         register_toplevel.resizable(0, 0)
         register_toplevel.title("Register")
-        register_toplevel.geometry("350x600")
+        register_toplevel.geometry("350x575")
 
         # Title
         register_title = tkinter.Label(register_toplevel, text = "Register form")
@@ -170,7 +170,7 @@ class ClientGUI(tkinter.Frame):
             command = self.register
         )
 
-        register_button.pack(ipadx = 15, ipady = 5)
+        register_button.pack(ipadx = 15, ipady = 5, pady = (15, 0))
 
     def register(self):
         # Get all the user information needed for registering 
@@ -257,6 +257,329 @@ class ClientGUI(tkinter.Frame):
                 except:
                     pass
                     
+    def login(self, e=None):
+        # Build the string with the dictionary that we will send to the server 
+        login_dict = {
+            "Username" : self.ClientAuthentication_Username.get(),
+            "Password" : self.ClientAuthentication_Password.get(),
+            "UEC" : self.ClientAuthentication_UEC.get()
+        }
+        login_string = "[USER-LOGIN-DATA]{0}".format(login_dict)
+        login_string = login_string.encode("utf-8")
+
+        # Build the client and connect it to the server 
+        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client.connect((socket.gethostname(), 1337))
+        client.setblocking(True)
+        client_BUFFER_SIZE = 2048
+
+        # Send login data to the server 
+        client.send(login_string)
+
+        # Wait for server response & build the new toplevel frame in case that the user has successfully logged in
+        logged_in = False
+        while True:
+            try:
+                login_validation_message  = client.recv(client_BUFFER_SIZE)
+                login_validation_message = login_validation_message.decode("utf-8")
+
+                if login_validation_message.startswith("[USER-LOGIN-ERROR]"):
+                    tkinter.messagebox.showerror("Login error", "There was an error when trying to log in. Make sure that your username, password and UEC are valid ( they are case sensitive ).")
+                else:
+                    tkinter.messagebox.showinfo("Login success", "You have been successfully logged in. Welcome !")
+                    logged_in = True
+                        
+                # Close the client connection with the server
+                client.close()
+
+                # Stop listening to the server
+                break
+            except:
+                pass
+
+        if logged_in:
+            self.buildLoginToplevelBasedOnUserType(eval(login_validation_message.split("]")[1]))
+
+    def buildLoginToplevelBasedOnUserType(self, USER_DATA_DICT):
+        # Build the toplevel frame & configure it
+        self.Login_Toplevel = tkinter.Toplevel(self.ClientAuthentication_Frame)
+        self.Login_Toplevel.configure(
+            bg = "#F7F3F0",
+            borderwidth = 0
+        )
+
+        self.Login_Toplevel.resizable(0, 0)
+        self.Login_Toplevel.title("Welcome, {0} !".format(USER_DATA_DICT.get("FirstName")))
+
+        # Modify the geometry of the toplevel login frame based on the user type ( the worker doesn't need a control frame ) and also based on the user type, build the needed frames
+
+        user_type = USER_DATA_DICT.get("UserType")
+        if user_type == "Worker":
+            self.BuildLogin_InfoFrame(USER_DATA_DICT)
+            self.BuildLogin_ChatFrame(USER_DATA_DICT)
+
+            self.Login_Toplevel.geometry("1000x1000")
+        elif user_type == "Administrator" or user_type == "Owner":
+            self.BuildLogin_InfoFrame(USER_DATA_DICT)
+            self.BuildLogin_ControlFrame(USER_DATA_DICT)
+            self.BuildLogin_ChatFrame(USER_DATA_DICT)
+
+            self.Login_Toplevel.geometry("1000x1025")
+
+    def BuildLogin_InfoFrame(self, USER_DATA_DICT):
+        info_frame = tkinter.Frame(self.Login_Toplevel, height = 200)
+        info_frame.configure(
+            bg = "#F7F3F0",
+            borderwidth = 0
+        )
+
+        info_frame_title = tkinter.Label(info_frame, text = "User info")
+        info_frame_title.configure(
+            fg = "#FF896A",
+            bg = "#F7F3F0",
+            font = "Cursive 25 bold",
+            borderwidth = 0
+        )
+        info_frame_title.place(relx=0, rely=0, anchor=tkinter.NW)
+
+        for key, value in USER_DATA_DICT.items():
+            info_label = tkinter.Label(info_frame)
+            info_label.configure(text = "{0} : {1}".format(key, value))
+
+            info_label.configure(
+                bg = "#F7F3F0",
+                fg = "#B3D9E3",
+                font = "Cursive 13 bold",
+                borderwidth = 0
+            )
+
+            info_label.pack()
+
+        info_frame.pack(fill = "x")
+
+    def BuildLogin_ControlFrame(self, USER_DATA_DICT):
+        control_frame = tkinter.Frame(self.Login_Toplevel)
+        control_frame.configure(
+            bg = "#F7F3F0",
+            borderwidth = 0
+        )
+
+        # CONTROL FRAME TITLE
+        control_frame_title = tkinter.Label(control_frame, text = "Control frame")
+        control_frame_title.configure(
+            fg = "#FF896A",
+            bg = "#F7F3F0",
+            font = "Cursive 25 bold",
+            borderwidth = 0
+        )
+        control_frame_title.place(relx=0, rely=0, anchor=tkinter.NW)
+        # CONTROL FRAME TITLE
+
+        ##### Delete frame #####
+        delete_frame = tkinter.Frame(control_frame)
+        delete_frame.configure(
+            bg = "#F7F3F0",
+            borderwidth = 0
+        )
+
+        # Title
+        delete_frame_title = tkinter.Label(delete_frame, text = "Delete User")
+        delete_frame_title.configure(
+            bg = "#F7F3F0",
+            fg = "#333",
+            font = "Cursive 13 bold",
+            borderwidth = 0
+        )
+        delete_frame_title.pack()
+
+        # Entries, vars and button
+        self.delete_username = tkinter.StringVar()
+        self.delete_username.set("Username")
+
+        self.delete_password = tkinter.StringVar()
+        self.delete_password.set("Password")
+
+        self.delete_UEC = tkinter.StringVar()
+        self.delete_UEC.set("UEC")
+
+        delete_username_entry = tkinter.Entry(delete_frame, textvariable = self.delete_username)
+        delete_password_entry = tkinter.Entry(delete_frame, textvariable = self.delete_password)
+        delete_UEC_entry = tkinter.Entry(delete_frame, textvariable = self.delete_UEC)
+
+        for entry in [delete_username_entry, delete_password_entry, delete_UEC_entry]:
+            entry.configure(
+                bg = "#5B7594",
+                fg = "#F7F3F0",
+                font = "Cursive 12 bold",
+                borderwidth = 0
+            )
+
+            entry.pack(pady = 10, ipady=3, ipadx=3)
+
+        delete_button = tkinter.Button(delete_frame, text = "Delete user")
+        delete_button.configure(
+            bg = "#333",
+            fg = "#fff",
+            font = "Cursive 14 bold",
+            borderwidth = 0
+        )
+        delete_button.pack(pady=(88, 10), ipadx=2, ipady=2)
+        ##### Delete frame #####
+
+        ##### Info frame #####
+        info_frame = tkinter.Frame(control_frame)
+        info_frame.configure(
+            bg = "#F7F3F0",
+            borderwidth = 0
+        )
+        
+        # Title 
+        info_frame_title = tkinter.Label(info_frame, text = "Get info")
+        info_frame_title.configure(
+            bg = "#F7F3F0",
+            fg = "#333",
+            font = "Cursive 13 bold",
+            borderwidth = 0
+        )
+        info_frame_title.pack()
+
+        # Entries, vars and button
+        self.info_username = tkinter.StringVar()
+        self.info_username.set("Username")
+
+        self.info_password = tkinter.StringVar()
+        self.info_password.set("Password")
+
+        info_username_entry = tkinter.Entry(info_frame, textvariable = self.info_username)
+        info_password_entry = tkinter.Entry(info_frame, textvariable = self.info_password)
+
+        for entry in [info_username_entry, info_password_entry]:
+            entry.configure(
+                bg = "#5B7594",
+                fg = "#F7F3F0",
+                font = "Cursive 12 bold",
+                borderwidth = 0
+            )
+
+            entry.pack(pady = 10, ipady=3, ipadx=3)
+
+        info_button = tkinter.Button(info_frame, text = "Get info")
+        info_button.configure(
+            bg = "#333",
+            fg = "#fff",
+            font = "Cursive 14 bold",
+            borderwidth = 0
+        )
+        info_button.pack(pady=(137, 10), ipadx=2, ipady=2)
+        ##### Info frame #####
+
+        ##### Update frame ####
+        update_frame = tkinter.Frame(control_frame)
+        update_frame.configure(
+            bg = "#F7F3F0",
+            borderwidth = 0
+        )
+
+        # Title
+        update_frame_title = tkinter.Label(update_frame, text = "Update user")
+        update_frame_title.configure(
+            bg = "#F7F3F0",
+            fg = "#333",
+            font = "Cursive 13 bold",
+            borderwidth = 0
+        )
+        update_frame_title.pack()
+
+        # Entries, vars and button
+        self.update_username = tkinter.StringVar()
+        self.update_username.set("Username")
+
+        self.update_password = tkinter.StringVar()
+        self.update_password.set("Password")
+
+        self.update_UpdateProperty = tkinter.StringVar()
+        self.update_UpdateProperty.set("Update property")
+
+        self.update_Value = tkinter.StringVar()
+        self.update_Value.set("Value")
+
+        update_username_entry = tkinter.Entry(update_frame, textvariable = self.update_username)
+        update_password_entry = tkinter.Entry(update_frame, textvariable = self.update_password)
+        update_UpdateProperty_entry = tkinter.Entry(update_frame, textvariable = self.update_UpdateProperty)
+        update_Value_entry = tkinter.Entry(update_frame, textvariable = self.update_Value)
+
+        for entry in [update_username_entry, update_password_entry, update_UpdateProperty_entry, update_Value_entry]:
+            entry.configure(
+                bg = "#5B7594",
+                fg = "#F7F3F0",
+                font = "Cursive 12 bold",
+                borderwidth = 0
+            )
+
+            entry.pack(pady = 10, ipady=5, ipadx=3)
+
+        update_button = tkinter.Button(update_frame, text = "Update")
+        update_button.configure(
+            bg = "#333",
+            fg = "#fff",
+            font = "Cursive 14 bold",
+            borderwidth = 0
+        )
+        update_button.pack(pady=(25, 10), ipadx=2, ipady=2)
+        ##### Update frame ####
+
+        # Pack all the control frames & the master of the control frames
+        delete_frame.pack(side="left", padx=(50, 0), pady=(75, 0), anchor = tkinter.NW)
+        info_frame.pack(side="left", padx=(150, 0), pady = (75, 0), anchor=tkinter.N)
+        update_frame.pack(side="right", padx=(0, 50), pady=(75, 0), anchor = tkinter.NW)
+
+        control_frame.pack(fill="x", pady=(50, 0))
+     
+    def BuildLogin_ChatFrame(self, USER_DATA_DICT):
+        # Build the frame
+        chat_frame = tkinter.Frame(self.Login_Toplevel)
+        chat_frame.configure(
+            bg = "#F7F3F0",
+            borderwidth = 0
+        )
+
+        # Title
+        chat_frame_title = tkinter.Label(chat_frame, text = "Chat")
+        chat_frame_title.configure(
+            fg = "#FF896A",
+            bg = "#F7F3F0",
+            font = "Cursive 25 bold",
+            borderwidth = 0
+        )
+        chat_frame_title.place(relx=0, rely=0, anchor=tkinter.NW)
+
+        # Chat scrolledtext
+        self.CHAT_SCROLLEDTEXT = tkinter.scrolledtext.ScrolledText(chat_frame)
+
+        # Configure the scrolled text widget
+        self.CHAT_SCROLLEDTEXT.configure(
+            width = 100, 
+            height = 10, 
+            borderwidth = 1 
+        )
+        self.CHAT_SCROLLEDTEXT.pack(pady = (50, 0))
+
+        # Build the entry
+        self.chat_entry_message = tkinter.StringVar()
+        self.chat_entry_message.set("Write your message here and press the <Enter>-key to send it")
+
+        chat_entry = tkinter.Entry(chat_frame)
+        chat_entry.configure(
+            bg = "#333",
+            fg = "#ffffff",
+            font = "Cursive 12 bold",
+            width = 100,
+            borderwidth = 0 
+        )
+        chat_entry.pack(pady=(20, 0), ipady=3, ipadx=3)
+
+        chat_frame.pack(fill = "x", pady = (50, 0)) 
+
 tk = tkinter.Tk()
 
 clientGUI = ClientGUI(tk)
