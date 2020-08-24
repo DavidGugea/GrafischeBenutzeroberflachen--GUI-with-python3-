@@ -72,9 +72,6 @@ class Server(object):
             -- > If the server gets "[USER-UPDATE-DATA]{Username: "...", Password: "...", UpdateProperty : "...", Value: " ", TYPE: "..."}" type of format ( so if it starts with [USER-UPDATE-DATA], we will eval the dict after checking that ), check if the given username and password are valid. If they are valid, update the property and then send the [USER-UPDATE-SUCCESS] back to the client. If the user wasn't found, then don't update anything and send [USER-UPDATE-ERROR] back to the client.
             -- > If the server gets "[USER-INFO-DATA]{Username:"...", Password: "..."} back, then check if the user was found in the database, if it was found then send back [USER-INFO-SUCCESS]{Username: "...", ...}. If the user wasn't found in the database, then send back an [USER-INFO-ERROR]
             '''    
-
-            if client_message == "hello":
-                communication_socket.send("hello from the server".encode("utf-8"))
             
             if client_message.startswith("[USER-REGISTER-DATA]"):
                 REGISTER_DATA_DICT = eval(client_message.split("]")[1])

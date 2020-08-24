@@ -1,9 +1,11 @@
-import tkinter, tkinter.scrolledtext, tkinter.messagebox, tkinter.font
+import tkinter, tkinter.scrolledtext, tkinter.messagebox
 import socket
+import sys
 
 class ClientGUI(tkinter.Frame):
     def __init__(self, master = None):
         super().__init__(master)
+        self.master = master
         '''
         Colors used for the client - GUI:
         #FF896A -- > orange-like
@@ -28,6 +30,19 @@ class ClientGUI(tkinter.Frame):
 
         # Create the for the client authentication frame
         self.createAuthenticationWidgets()
+
+        # Build the chat client
+        self.chat_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.chat_client.connect((socket.gethostname(), 1337))
+            self.chat_client.settimeout(0.2)
+        except ConnectionRefusedError:
+            tkinter.messagebox.showerror("Error when trying to connect the client", "Make sure that the server is opened before starting the client.")
+            sys.exit(0)
+
+        # Keep track of the windows opened. The users must not be able to open for example two login windows even if there are different accounts, because the different accounts share the same client, so the chat section won't work for them.
+        self.login_window_opened = False
+        self.register_window_opened = False
 
     def createAuthenticationWidgets(self):
         # Welcome message
@@ -84,10 +99,25 @@ class ClientGUI(tkinter.Frame):
         ClientAuthentication_Register_Button.place(relx = 0, rely = 1, anchor = tkinter.SW)
         ClientAuthentication_Login_Button.place(relx = 1, rely = 1, anchor = tkinter.SE)
 
-        ClientAuthentication_Login_Button.configure(command = self.login)
-        ClientAuthentication_Register_Button.configure(command = self.build_register_toplevel)
+        def login_check():
+            if not self.login_window_opened:
+                self.login()
+            else:
+                tkinter.messagebox.showerror("Window already opened", "One login window is already opened. You can't open two login windows at the same time.")
+                
+        def register_check():
+            if not self.register_window_opened:
+                self.build_register_toplevel()
+            else:
+                tkinter.messagebox.showerror("Window already opened", "One register window is already opened. You can't open two register windows at the same time.")
+
+        ClientAuthentication_Login_Button.configure(command = login_check)
+        ClientAuthentication_Register_Button.configure(command = register_check)
     
     def build_register_toplevel(self):
+        # Change the self.register_window_opened value to True so the user can't open two register windows
+        self.register_window_opened = True
+
         # Build a new toplevel for registering with all the needed inputs
         register_toplevel = tkinter.Toplevel(self.ClientAuthentication_Frame)
         register_toplevel.configure(
@@ -98,12 +128,17 @@ class ClientGUI(tkinter.Frame):
         register_toplevel.title("Register")
         register_toplevel.geometry("350x575")
 
+        def register_toplevel_close_event():
+            self.register_close_toplevel(register_toplevel)
+
+        register_toplevel.protocol("WM_DELETE_WINDOW", register_toplevel_close_event)
+
         # Title
         register_title = tkinter.Label(register_toplevel, text = "Register form")
         register_title.configure(
             bg = "#5B7594",
             fg = "#F5D1C3",
-            font = "Cursiv 25 bold"
+            font = "Cursive 25 bold"
         )
         register_title.pack(pady=(5, 15))
 
@@ -296,7 +331,22 @@ class ClientGUI(tkinter.Frame):
                 pass
 
         if logged_in:
+            # Change the self.login_window_opened to True so the user won't be able to open two login windows
+            self.login_window_opened = True
+
             self.buildLoginToplevelBasedOnUserType(eval(login_validation_message.split("]")[1]))
+
+    def login_close_toplevel(self):
+        # When the user closes the login window, allow him to open it again by setting the self.login_window_opened property to False
+        self.login_window_opened = False
+
+        self.Login_Toplevel.destroy()
+
+    def register_close_toplevel(self, window):
+        # When the user closes the register window, allow him to open it again by setting the self.register_window_opened property to False
+        self.register_window_opened = False
+
+        window.destroy()
 
     def buildLoginToplevelBasedOnUserType(self, USER_DATA_DICT):
         # Build the toplevel frame & configure it
@@ -305,6 +355,8 @@ class ClientGUI(tkinter.Frame):
             bg = "#F7F3F0",
             borderwidth = 0
         )
+
+        self.Login_Toplevel.protocol("WM_DELETE_WINDOW", self.login_close_toplevel)
 
         self.Login_Toplevel.resizable(0, 0)
         self.Login_Toplevel.title("Welcome, {0} !".format(USER_DATA_DICT.get("FirstName")))
@@ -577,7 +629,7 @@ class ClientGUI(tkinter.Frame):
         self.chat_entry_message = tkinter.StringVar()
         self.chat_entry_message.set("Write your message here and press the <Enter>-key to send it")
 
-        chat_entry = tkinter.Entry(chat_frame)
+        chat_entry = tkinter.Entry(chat_frame, textvariable=self.chat_entry_message)
         chat_entry.configure(
             bg = "#333",
             fg = "#ffffff",
@@ -585,6 +637,11 @@ class ClientGUI(tkinter.Frame):
             width = 100,
             borderwidth = 0 
         )
+
+        def send_chat(e):
+            self.send_chat_message(USER_DATA_DICT)
+        chat_entry.bind("<Return>", send_chat)
+
         chat_entry.pack(pady=(20, 0), ipady=3, ipadx=3)
 
         chat_frame.pack(fill = "x", pady = (50, 0)) 
@@ -716,8 +773,6 @@ class ClientGUI(tkinter.Frame):
             "TYPE" : USER_DATA_DICT.get("UserType")
         }
 
-        print(update_dictionary)
-
         # Make the client and send the user information to the server
         client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         client.connect((socket.gethostname(), 1337))
@@ -742,7 +797,27 @@ class ClientGUI(tkinter.Frame):
         # Close the client
         client.close()
 
-tk = tkinter.Tk()
+    def ListenToServer_Chat(self):
+        try:
+            message_from_server = self.chat_client.recv(pow(2, 30))
+            self.CHAT_SCROLLEDTEXT.insert("{0}\n".format(tkinter.END), message_from_server.decode("utf-8"))
+        except:
+            pass
+        
+        self.master.after(1000, self.ListenToServer_Chat)
 
+    def send_chat_message(self, USER_DATA_DICT):
+        message = self.chat_entry_message.get()
+        chat_message = "{0} {1} : {2}".format(
+            USER_DATA_DICT.get("FirstName"),
+            USER_DATA_DICT.get("SecondName"),
+            message
+        )
+
+        self.CHAT_SCROLLEDTEXT.insert(tkinter.END, "{0}\n".format(chat_message))
+        self.chat_client.send(chat_message.encode("utf-8"))
+
+tk = tkinter.Tk()
 clientGUI = ClientGUI(tk)
+clientGUI.after(1000, clientGUI.ListenToServer_Chat)
 clientGUI.mainloop()
